@@ -63,6 +63,34 @@ docker compose up --build
 - **Цветовая шкала:** страны с 1–2 отметками светло-жёлтые, с 3–5 — более тёплые и т.д.  
 - **Список посетителей:** при выборе страны справа отображается список всех пользователей, которые её отметили
 
+## Удалить данные
+
+Удалить записи можно только напрямую из бд
+
+1. Подключайтесь к базе как удобнее, например
+
+`docker compose exec postgres psql -U postgres -d mapdb`
+
+2. Запросы
+```yaml
+-- посмотреть всех пользователей
+SELECT * FROM users;
+-- удалить все связи и перезагрузиться
+TRUNCATE TABLE marks, areas, users RESTART IDENTITY CASCADE;
+-- удалить связи пользователя, не удаляя пользователя
+DELETE FROM marks
+ WHERE user_id = (SELECT id FROM users WHERE name = 'k0');
+-- удалить пользователя
+DELETE FROM users WHERE name = 'k0';
+-- удалить конкретную отметку (по стране и id пользователя)
+DELETE FROM marks
+ WHERE user_id = 5
+   AND area_id = 'FRA';
+-- очистка всех отметок (не трогая users и areas)
+DELETE FROM marks;
+```
+
+
 ## Переменные окружения
 
 В `docker-compose.yml` прописаны:

@@ -20,8 +20,8 @@ fetch('countries.geojson')
 
 document.getElementById('setName').onclick = () => {
   const input = document.getElementById('username');
-  const err = document.getElementById('inputError');
-  const name = input.value.trim();
+  const err   = document.getElementById('inputError');
+  const name  = input.value.trim();
   if (!name) {
     err.textContent = 'Пожалуйста, введите имя';
     return;
@@ -33,27 +33,25 @@ document.getElementById('setName').onclick = () => {
 };
 
 function onAreaClick(feature) {
-  const err = document.getElementById('inputError');
-  if (!currentUser) {
-    err.textContent = 'Сначала установите имя';
-    return;
-  }
-  err.textContent = '';
-
-  // Показываем секцию выбора
+  // Показываем секцию выбранной страны
   document.getElementById('selection').classList.remove('hidden');
   document.getElementById('countryName').textContent = feature.properties["name"];
   const areaId = feature.id;
 
-  fetch('/api/mark', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user: currentUser, area_id: areaId })
-  })
-    .then(() => {
+  if (currentUser) {
+    // Авторизованный пользователь — сохраняем отметку
+    fetch('/api/mark', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: currentUser, area_id: areaId })
+    }).then(() => {
       refreshAreas();
       showUsers(areaId);
     });
+  } else {
+    // Анонимный просмотр — просто показываем список
+    showUsers(areaId);
+  }
 }
 
 function refreshAreas() {
@@ -74,8 +72,8 @@ function refreshAreas() {
 }
 
 function getColor(c) {
-  if (c < 3) return '#fff7bc';
-  if (c < 6) return '#fee391';
+  if (c < 3)  return '#fff7bc';
+  if (c < 6)  return '#fee391';
   if (c < 10) return '#fec44f';
   return '#fe9929';
 }
@@ -86,6 +84,12 @@ function showUsers(areaId) {
     .then(data => {
       const ul = document.getElementById('usersList');
       ul.innerHTML = '';
+      if (data.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = '(ещё никто не отметил эту страну)';
+        ul.appendChild(li);
+        return;
+      }
       data.forEach(n => {
         const li = document.createElement('li');
         li.textContent = n;
